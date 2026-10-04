@@ -13,23 +13,33 @@ Job notes → Extract → Review/Edit → Approve → PDF → Email customer →
 ## What works
 
 - Landing, signup, login, dashboard
-- Multi-tenant isolation
+- Multi-tenant isolation (server-side `business_id` checks)
 - Natural-language job intake + rule-based extraction
-- Editable review (customer, line items, totals)
-- Approve assigns invoice number (does **not** fake email)
+- Editable review, invoice numbering, price memory
 - Real server-side PDF generation
-- **Email Invoice** via Resend provider abstraction
-  - Never reports "sent" unless provider accepts the message
-  - Email event audit log
-  - Clear "Email not configured" when `RESEND_API_KEY` is missing
-- Price memory per business
+- Email Invoice via Resend (no fake success)
+- **Postgres persistence** when `DATABASE_URL` is set
+  - Schema: `migrations/001_init.sql`
+  - Fallback: hybrid file/memory store without `DATABASE_URL`
 
 ## Stack
 
-- Next.js 15 (App Router) + TypeScript + Tailwind 4
-- Cookie sessions
-- Modular AI extraction + EmailProvider (Resend first)
-- Hybrid storage (local FS / serverless memory) — ready for Supabase
+- Next.js 15 + TypeScript + Tailwind 4
+- `pg` + store facade (`store.ts` → memory | postgres)
+- EmailProvider (Resend)
+
+## Database setup
+
+1. Create a Supabase (or any Postgres) project
+2. Run `migrations/001_init.sql` in the SQL editor
+3. Set:
+
+```bash
+DATABASE_URL=postgresql://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres
+DATABASE_SSL=true
+```
+
+See `migrations/README.md`.
 
 ## Local development
 
@@ -38,37 +48,24 @@ npm install
 npm run dev
 ```
 
+Without `DATABASE_URL`, data is local-only (not multi-instance safe).
+
 ## Environment variables
 
 ```bash
-# Email (required for real delivery)
-RESEND_API_KEY=re_...
-EMAIL_FROM="Your Business <billing@yourdomain.com>"
-
-# Optional AI
-AI_PROVIDER=openai
+DATABASE_URL=
+DATABASE_SSL=true
+RESEND_API_KEY=
+EMAIL_FROM="InvoiceForge <onboarding@resend.dev>"
+AI_PROVIDER=
 AI_API_KEY=
-
-# Future Postgres/Supabase
-# DATABASE_URL=
-# NEXT_PUBLIC_SUPABASE_URL=
-# SUPABASE_SERVICE_ROLE_KEY=
 ```
-
-See `.env.example`.
 
 ## Limitations
 
-- Without `RESEND_API_KEY`, email UI shows "Email not configured"
+- Postgres path not live-tested without your credentials
+- Vercel deploy requires project-create permission + env vars
 - Payment links / WhatsApp not built yet
-- Storage is not multi-instance persistent until Supabase is wired
-- Vercel project creation may require account permission
-
-## Security
-
-- Tenant checks on job/PDF/email routes
-- No secrets in client bundles
-- Email only after ownership + validation
 
 ## License
 
