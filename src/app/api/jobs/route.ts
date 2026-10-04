@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
         id: randomUUID(),
         name: customerName || extraction.customerName || "Unknown",
         phone: customerPhone || extraction.customerPhone || undefined,
+        email: extraction.customerEmail || undefined,
         address: extraction.customerAddress || undefined,
       },
       status: "pending_approval",
