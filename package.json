@@ -6,12 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "echo 'Run: psql $DATABASE_URL -f migrations/001_init.sql'"
   },
   "dependencies": {
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "pg": "^8.13.0"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -21,6 +23,7 @@
     "eslint-config-next": "^15.1.0",
     "tailwindcss": "^4",
     "@tailwindcss/postcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/pg": "^8.11.0"
   }
 }
