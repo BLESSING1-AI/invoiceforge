@@ -1,28 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
 export const metadata: Metadata = {
-  title: "InvoiceForge — Turn Job Notes Into Paid Invoices",
+  title: "InvoiceForge — Turn job notes into paid invoices",
   description:
-    "Send your voice note, photos or job details. InvoiceForge turns the mess into a professional invoice and helps you follow up until you're paid. Built for South African trades.",
+    "Built for South African tradespeople. Send job details, get a professional invoice, and follow up until you are paid.",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
-      <body className="min-h-full bg-slate-50 font-sans text-slate-900 antialiased">
-        {children}
-      </body>
+    <html lang="en">
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
