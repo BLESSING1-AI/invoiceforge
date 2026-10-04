@@ -1,19 +1,32 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { Business, Job, User, Reminder } from "./types";
+import { Business, Job, User, Reminder, EmailEvent } from "./types";
 
-// Hybrid store: tries filesystem (local/dev), falls back to in-memory (Vercel serverless)
-// For real production multi-instance, swap this for Supabase/Postgres.
+/**
+ * Persistence layer.
+ *
+ * Current: hybrid filesystem (local) / in-memory (serverless).
+ * Production target: Postgres via Supabase (DATABASE_URL).
+ *
+ * All business logic depends only on the exported functions below —
+ * swap the implementation of readJson/writeJson for Supabase without
+ * changing call sites.
+ *
+ * Env for future Supabase:
+ *   DATABASE_URL=postgresql://...
+ *   NEXT_PUBLIC_SUPABASE_URL=...
+ *   SUPABASE_SERVICE_ROLE_KEY=...
+ */
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const isServerless = process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
-// In-memory fallback (per-instance)
 const memory: Record<string, any> = {
   users: [],
   businesses: [],
   jobs: [],
   reminders: [],
+  email_events: [],
 };
 
 async function ensureDir() {
@@ -49,7 +62,6 @@ async function writeJson<T>(filename: string, data: T): Promise<void> {
   await fs.writeFile(file, JSON.stringify(data, null, 2), "utf-8");
 }
 
-// Users
 export async function getUsers(): Promise<User[]> {
   return readJson<User[]>("users.json", []);
 }
@@ -70,7 +82,6 @@ export async function createUser(user: User): Promise<User> {
   return user;
 }
 
-// Businesses
 export async function getBusinesses(): Promise<Business[]> {
   return readJson<Business[]>("businesses.json", []);
 }
@@ -100,7 +111,6 @@ export async function updateBusiness(id: string, updates: Partial<Business>): Pr
   return businesses[idx];
 }
 
-// Jobs
 export async function getJobs(): Promise<Job[]> {
   return readJson<Job[]>("jobs.json", []);
 }
@@ -137,7 +147,6 @@ export async function updateJob(id: string, updates: Partial<Job>): Promise<Job 
   return jobs[idx];
 }
 
-// Reminders
 export async function getReminders(): Promise<Reminder[]> {
   return readJson<Reminder[]>("reminders.json", []);
 }
@@ -151,4 +160,26 @@ export async function createReminder(reminder: Reminder): Promise<Reminder> {
   reminders.push(reminder);
   await saveReminders(reminders);
   return reminder;
+}
+
+export async function getEmailEvents(): Promise<EmailEvent[]> {
+  return readJson<EmailEvent[]>("email_events.json", []);
+}
+
+export async function saveEmailEvents(events: EmailEvent[]): Promise<void> {
+  await writeJson("email_events.json", events);
+}
+
+export async function createEmailEvent(event: EmailEvent): Promise<EmailEvent> {
+  const events = await getEmailEvents();
+  events.push(event);
+  await saveEmailEvents(events);
+  return event;
+}
+
+export async function findEmailEventsByJobId(jobId: string): Promise<EmailEvent[]> {
+  const events = await getEmailEvents();
+  return events
+    .filter((e) => e.jobId === jobId)
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
