@@ -7,34 +7,29 @@ Built for South African tradespeople — plumbers, electricians, HVAC, handymen,
 ## Core product loop
 
 ```
-Job notes → Extract → Review/Edit → Approve → Invoice PDF → Track payment
+Job notes → Extract → Review/Edit → Approve → PDF → Email customer → Track payment
 ```
 
 ## What works
 
-- Landing page (mobile-first)
-- Sign up / Login / cookie sessions
-- Multi-tenant business isolation
-- Dashboard with **Money still outstanding** as primary metric
-- Natural-language job intake
-- Rule-based extraction (customer, labour, materials, call-out, prices)
-- Never invents prices or customers
-- Full editable review screen (customer + line items + totals)
-- Server-side total recalculation
-- Approve & mark as sent
-- Invoice numbering + price memory per business
-- **Real server-side PDF generation** (pure TypeScript, no external deps)
-- PDF download + native share
-- Audit log
-- Hybrid storage (filesystem local / in-memory serverless)
+- Landing, signup, login, dashboard
+- Multi-tenant isolation
+- Natural-language job intake + rule-based extraction
+- Editable review (customer, line items, totals)
+- Approve assigns invoice number (does **not** fake email)
+- Real server-side PDF generation
+- **Email Invoice** via Resend provider abstraction
+  - Never reports "sent" unless provider accepts the message
+  - Email event audit log
+  - Clear "Email not configured" when `RESEND_API_KEY` is missing
+- Price memory per business
 
 ## Stack
 
-- Next.js 15 (App Router) + TypeScript
-- Tailwind CSS 4
-- Cookie session auth
-- Modular AI extraction (ready for real LLM)
-- Pure-TS PDF engine
+- Next.js 15 (App Router) + TypeScript + Tailwind 4
+- Cookie sessions
+- Modular AI extraction + EmailProvider (Resend first)
+- Hybrid storage (local FS / serverless memory) — ready for Supabase
 
 ## Local development
 
@@ -43,31 +38,37 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+## Environment variables
 
-## Environment variables (optional)
+```bash
+# Email (required for real delivery)
+RESEND_API_KEY=re_...
+EMAIL_FROM="Your Business <billing@yourdomain.com>"
 
+# Optional AI
+AI_PROVIDER=openai
+AI_API_KEY=
+
+# Future Postgres/Supabase
+# DATABASE_URL=
+# NEXT_PUBLIC_SUPABASE_URL=
+# SUPABASE_SERVICE_ROLE_KEY=
 ```
-AI_PROVIDER=openai|anthropic|grok
-AI_API_KEY=...
-```
 
-Without an AI key the rule-based extractor is used.
+See `.env.example`.
 
-## Current limitations
+## Limitations
 
-- Email / WhatsApp delivery mocked (status → `sent`)
-- Payment links not yet live
-- Photo / voice upload not yet implemented
-- Storage is hybrid file/in-memory — designed to migrate to Supabase/Postgres
-- Vercel project creation currently blocked (403) on this account
+- Without `RESEND_API_KEY`, email UI shows "Email not configured"
+- Payment links / WhatsApp not built yet
+- Storage is not multi-instance persistent until Supabase is wired
+- Vercel project creation may require account permission
 
 ## Security
 
-- Tenant isolation on every job/business/PDF query
-- HttpOnly session cookies
-- No API keys in client code
-- Server-side authorization before PDF generation
+- Tenant checks on job/PDF/email routes
+- No secrets in client bundles
+- Email only after ownership + validation
 
 ## License
 
