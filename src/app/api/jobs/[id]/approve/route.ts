@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { findJobById, updateJob, updateBusiness } from "@/lib/store";
 
+/**
+ * Approve invoice: assign number, set status to "approved".
+ * Does NOT mark as "sent" — that happens only after real email delivery.
+ */
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -26,23 +30,17 @@ export async function POST(
     dueDate.setDate(dueDate.getDate() + business.defaultPaymentTermsDays);
 
     await updateJob(id, {
-      status: "sent",
+      status: "approved",
       invoiceNumber,
-      sentAt: now,
       dueDate: dueDate.toISOString(),
+      emailDeliveryStatus: "ready",
       auditLog: [
         ...job.auditLog,
         {
           timestamp: now,
           action: "invoice_approved",
           actor: "user",
-          details: `Invoice ${invoiceNumber} approved`,
-        },
-        {
-          timestamp: now,
-          action: "invoice_sent",
-          actor: "system",
-          details: "Email delivery mocked in MVP",
+          details: `Invoice ${invoiceNumber} approved — ready to email`,
         },
       ],
     });
@@ -76,7 +74,7 @@ export async function POST(
     return NextResponse.json({
       ok: true,
       invoiceNumber,
-      message: "Invoice approved and marked as sent",
+      message: "Invoice approved — ready to download PDF or email",
     });
   } catch (e) {
     console.error(e);

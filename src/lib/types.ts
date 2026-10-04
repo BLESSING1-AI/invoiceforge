@@ -10,6 +10,13 @@ export type JobStatus =
   | "overdue"
   | "cancelled";
 
+export type EmailDeliveryStatus =
+  | "not_configured"
+  | "ready"
+  | "sending"
+  | "sent"
+  | "failed";
+
 export interface LineItem {
   id: string;
   description: string;
@@ -25,6 +32,18 @@ export interface Customer {
   phone?: string;
   email?: string;
   address?: string;
+}
+
+export interface EmailEvent {
+  id: string;
+  jobId: string;
+  businessId: string;
+  recipientEmail: string;
+  timestamp: string;
+  provider: string;
+  success: boolean;
+  messageId?: string;
+  error?: string;
 }
 
 export interface Job {
@@ -48,6 +67,9 @@ export interface Job {
   dueDate?: string;
   paidAt?: string;
   sentAt?: string;
+  emailDeliveryStatus?: EmailDeliveryStatus;
+  lastEmailAt?: string;
+  lastEmailTo?: string;
   createdAt: string;
   updatedAt: string;
   extractionConfidence: number;
